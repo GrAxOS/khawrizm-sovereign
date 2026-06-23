@@ -1,3 +1,23 @@
+# Technical Specifications
+
+## Overview
+Sovereign AI Infrastructure - Zero Telemetry - Local-First C11/Rust Stack.
+
+## Core Principles
+- Air-gapped Execution
+- Cryptographic Proof of Intent
+- Local Niyah Logic Engine
+
+# Technical Specifications
+
+## Overview
+Sovereign AI Infrastructure - Zero Telemetry - Local-First C11/Rust Stack.
+
+## Core Principles
+- Air-gapped Execution
+- Cryptographic Proof of Intent
+- Local Niyah Logic Engine
+
 <div align="center">
 
 <h1>
@@ -9,14 +29,12 @@
 <h3>Sovereign AI Development Environment</h3>
 
 <p dir="rtl" align="center">
-  <strong>« لا يوجد مستحيل في الدنيا — نحن ورثة الخوارزمي »</strong>
 </p>
 <p align="center">
   <em>"There is nothing impossible — We are heirs of Al-Khwarizmi"</em>
 </p>
 
 <p align="center">
-  <a href="#arabic-section"><img src="https://img.shields.io/badge/🇸🇦-المملكة_العربية_السعودية-006C35?style=for-the-badge" alt="Saudi Arabia" /></a>
 </p>
 
 <p align="center">
@@ -63,9 +81,7 @@
 
 ---
 
-### ✨ المميزات الرئيسية
 
-#### 🧠 الذكاء الاصطناعي ثلاثي الفصوص (Three-Lobe AI)
 - **الفص المعرفي (Cognitive Lobe):** الفهم العميق للسياق، التحليل الدلالي، توليد الكود
 - **الفص التنفيذي (Executive Lobe):** التخطيط متعدد الخطوات، التنسيق، تتبع الأهداف
 - **الفص الحسّي (Sensory Lobe):** معالجة المدخلات، تحليل الكود الفوري، اكتشاف الأنماط
@@ -84,7 +100,6 @@
 - **SovereignBridge:** عزل العمليات وإدارة أجهزة QEMU الافتراضية
 - **SovereignSessionCleaner:** تنظيف آمن ومشفّر للجلسات
 
-#### 🚀 مُوجِّه النماذج (ModelRouter)
 - دعم **16 عائلة نموذج** من Ollama
 - تسجيل ديناميكي للنماذج
 - ذاكرة تخزين LRU (512 إدخال)
@@ -130,7 +145,6 @@
 
 ---
 
-### 🚀 البدء السريع
 
 #### المتطلبات المسبقة
 ```bash
@@ -179,9 +193,7 @@ HAVEN embodies the legacy of **Muhammad ibn Musa Al-Khwarizmi** — the 9th-cent
 
 ---
 
-### ✨ Core Features
 
-#### 🧠 Three-Lobe AI Architecture
 A biologically-inspired cognitive framework that parallels human brain organization:
 
 | Lobe | Role | Capability |
@@ -225,7 +237,6 @@ The most sophisticated Arabic NLP engine ever embedded in an IDE:
 └─────────────────────────────────────────────────────┘
 ```
 
-#### 🚀 ModelRouter — Intelligent Model Dispatch
 
 - **16 model families** supported (Llama 3.x, Mistral, DeepSeek, Phi-3, Gemma 2, Qwen, CodeLlama, Falcon, Orca, WizardCoder, StarCoder, Mixtral, Command-R, Yi, Solar, Nous-Hermes)
 - Dynamic scoring based on task type, token budget, latency targets
@@ -536,7 +547,6 @@ See [LICENSE](LICENSE) for the full AGPL-3.0 text.
 | 📧 Email | [contact@khawrizm.com](mailto:contact@khawrizm.com) |
 | 🔒 Security | [security@khawrizm.com](mailto:security@khawrizm.com) |
 | 💼 Company | Ghala Rafaa Al-Omari Co. (CR: 7050426415) |
-| 🇸🇦 Origin | Kingdom of Saudi Arabia |
 | 👤 Creator | Sulaiman Alshammari (@Grar00t) |
 
 </div>
@@ -665,7 +675,6 @@ cd khawrizm-sovereign && npm install && npm run dev
 
 <br />
 
-Built with ❤️ in 🇸🇦 Saudi Arabia
 
 [khawrizm.com](https://khawrizm.com) · [@khawrzm](https://twitter.com/khawrzm) · [AGPL-3.0](LICENSE)
 
