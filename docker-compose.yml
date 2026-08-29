@@ -1,88 +1,64 @@
-version: '3.8'
-
 services:
-  # MariaDB Database
   mariadb:
     image: mariadb:11
-    container_name: sovereign_mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-sovereign-root-2024}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required}
       MYSQL_DATABASE: ${DB_NAME:-sovereign_db}
       MYSQL_USER: ${DB_USER:-sovereign_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-sovereign-pass-2024}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 20s
       timeout: 10s
       retries: 5
       start_period: 60s
     networks:
-      - sovereign_network
+      - backend_network
     restart: unless-stopped
 
-  # Backend API - Sovereign Bridge
   backend:
     build:
       context: ./2_Backend
       dockerfile: Dockerfile
-    container_name: sovereign_backend
     environment:
       NODE_ENV: production
-      DB_HOST: mariadb
-      DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-sovereign_db}
-      DB_USER: ${DB_USER:-sovereign_user}
-      DB_PASSWORD: ${DB_PASSWORD:-sovereign-pass-2024}
       PORT: 3000
+      AI_MODEL: ${AI_MODEL:-llama3.1:8b}
+      OLLAMA_URL: http://ollama:11434/api/generate
+      MAX_BODY_BYTES: ${MAX_BODY_BYTES:-1mb}
     ports:
-      - "3000:3000"
-    networks:
-      - sovereign_network
-    restart: unless-stopped
-    volumes:
-      - ./2_Backend/logs:/app/logs
-
-  # Haven IDE - Next.js Frontend
-  haven_ide:
-    build:
-      context: ./3_Core_Engines/Haven_IDE
-      dockerfile: Dockerfile
-    container_name: sovereign_haven_ide
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://backend:3000
-    ports:
-      - "9002:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
-      - backend
+      mariadb:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
     networks:
-      - sovereign_network
+      - backend_network
     restart: unless-stopped
 
-  # Ollama - Local AI Engine (Niyah Engine)
   ollama:
     image: ollama/ollama:latest
-    container_name: sovereign_niyah_engine
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     networks:
-      - sovereign_network
+      - backend_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:11434/api/tags > /dev/null 2>&1 || exit 0"]
-      interval: 60s
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+      interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 60s
 
 volumes:
   mariadb_data:
@@ -91,5 +67,5 @@ volumes:
     driver: local
 
 networks:
-  sovereign_network:
+  backend_network:
     driver: bridge
