@@ -1,65 +1,26 @@
 #!/bin/bash
 
-# ============================================================
-# SOVEREIGN ECOSYSTEM - DEPLOYMENT SCRIPT
-# ============================================================
+set -euo pipefail
 
-set -e
-
-echo "🚀 SOVEREIGN ECOSYSTEM DEPLOYMENT"
-echo "=================================="
-
-# Check if Docker is running
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker is not installed or not in PATH"
-    exit 1
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker is not installed or not in PATH" >&2
+  exit 1
 fi
 
-if ! docker ps &> /dev/null; then
-    echo "❌ Docker daemon is not running"
-    exit 1
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker daemon is not available" >&2
+  exit 1
 fi
 
-echo "✅ Docker is running"
-
-# Load environment
 if [ ! -f .env ]; then
-    echo "📋 Creating .env from .env.example..."
-    cp .env.example .env
-    echo "⚠️  Please edit .env with your configuration"
+  echo "Missing .env. Copy .env.example to .env and set required values." >&2
+  exit 1
 fi
 
-# Build images
-echo ""
-echo "🔨 Building Docker images..."
-docker-compose build --no-cache
+if ! grep -q '^DB_ROOT_PASSWORD=' .env || ! grep -q '^DB_PASSWORD=' .env; then
+  :
+fi
 
-# Start services
-echo ""
-echo "🎯 Starting services..."
-docker-compose up -d
-
-# Wait for services to be ready
-echo ""
-echo "⏳ Waiting for services to be healthy..."
-sleep 5
-
-# Check service health
-echo ""
-echo "📊 Service Status:"
-docker-compose ps
-
-echo ""
-echo "✅ SOVEREIGN ECOSYSTEM is running!"
-echo ""
-echo "📍 Access Points:"
-echo "  • Backend API: http://localhost:3000"
-echo "  • Haven IDE: http://localhost:9002"
-echo "  • Niyah Engine (Ollama): http://localhost:11434"
-echo "  • Database: localhost:3306"
-echo ""
-echo "💡 Useful commands:"
-echo "  • View logs: docker-compose logs -f"
-echo "  • Stop: docker-compose down"
-echo "  • Restart: docker-compose restart"
-echo ""
+docker compose build
+docker compose up -d
+docker compose ps
