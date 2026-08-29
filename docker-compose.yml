@@ -23,6 +23,8 @@ services:
     image: ollama/ollama:latest
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
+    expose:
+      - "11434"
     volumes:
       - ollama_data:/root/.ollama
     networks:
