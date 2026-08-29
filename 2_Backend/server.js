@@ -7,11 +7,15 @@ require('dotenv').config();
 const app = express();
 const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 const MAX_BODY_BYTES = process.env.MAX_BODY_BYTES || '1mb';
+const MAX_RESPONSE_CHARS = Number.parseInt(process.env.MAX_RESPONSE_CHARS || '200000', 10);
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://ollama:11434/api/generate';
 const DEFAULT_MODEL = process.env.AI_MODEL || 'llama3.1:8b';
 
-if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+if (!Number.isInteger(PORT) || PORT < 0 || PORT > 65535) {
   throw new Error('Invalid PORT configuration');
+}
+if (!Number.isInteger(MAX_RESPONSE_CHARS) || MAX_RESPONSE_CHARS < 1) {
+  throw new Error('Invalid MAX_RESPONSE_CHARS configuration');
 }
 
 let ollamaUrl;
@@ -19,6 +23,10 @@ try {
   ollamaUrl = new URL(OLLAMA_URL);
   if (ollamaUrl.protocol !== 'http:' && ollamaUrl.protocol !== 'https:') {
     throw new Error('OLLAMA_URL must use HTTP or HTTPS');
+  }
+  const allowedHosts = new Set(['ollama', 'localhost', '127.0.0.1', '[::1]', '::1']);
+  if (!allowedHosts.has(ollamaUrl.hostname) || ollamaUrl.port !== '11434' || ollamaUrl.pathname !== '/api/generate' || ollamaUrl.search || ollamaUrl.hash) {
+    throw new Error('OLLAMA_URL must target the local Ollama /api/generate endpoint');
   }
 } catch {
   throw new Error('Invalid OLLAMA_URL configuration');
@@ -96,9 +104,13 @@ app.post('/api/ai/generate', async (req, res, next) => {
       clearTimeout(timeout);
     }
 
+    const contentType = response.headers.get('content-type') || '';
     const text = await response.text();
     if (!response.ok) {
       return res.status(502).json({ error: 'AI provider request failed' });
+    }
+    if (!contentType.toLowerCase().includes('application/json')) {
+      return res.status(502).json({ error: 'AI provider returned an unexpected content type' });
     }
 
     let data;
@@ -110,6 +122,9 @@ app.post('/api/ai/generate', async (req, res, next) => {
 
     if (typeof data.response !== 'string' || data.response.length === 0) {
       return res.status(502).json({ error: 'AI provider returned an empty response' });
+    }
+    if (data.response.length > MAX_RESPONSE_CHARS) {
+      return res.status(502).json({ error: 'AI provider response exceeds maximum size' });
     }
 
     return res.status(200).json({
@@ -147,12 +162,24 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ error: 'Internal Server Error' });
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend listening on port ${PORT}`);
+const startServer = (port = PORT) => app.listen(port, '0.0.0.0', () => {
+  const address = serverAddress();
+  console.log(`Backend listening on port ${address}`);
 });
 
+const serverAddress = () => {
+  const address = activeServer?.address();
+  return address && typeof address === 'object' ? address.port : PORT;
+};
+
+let activeServer = null;
+if (require.main === module) {
+  activeServer = startServer();
+}
+
 const shutdown = (signal) => {
-  server.close(() => process.exit(0));
+  if (!activeServer) process.exit(0);
+  activeServer.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();
   console.log(`Received ${signal}; shutting down`);
 };
@@ -160,4 +187,4 @@ const shutdown = (signal) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-module.exports = { app, server };
+module.exports = { app, startServer };
