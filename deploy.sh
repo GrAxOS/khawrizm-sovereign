@@ -17,10 +17,6 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-if ! grep -q '^DB_ROOT_PASSWORD=' .env || ! grep -q '^DB_PASSWORD=' .env; then
-  :
-fi
-
 docker compose build
 docker compose up -d
 docker compose ps
