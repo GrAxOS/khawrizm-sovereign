@@ -1,26 +1,4 @@
 services:
-  mariadb:
-    image: mariadb:11
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required}
-      MYSQL_DATABASE: ${DB_NAME:-sovereign_db}
-      MYSQL_USER: ${DB_USER:-sovereign_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-    ports:
-      - "127.0.0.1:3306:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - backend_network
-    restart: unless-stopped
-
   backend:
     build:
       context: ./2_Backend
@@ -31,11 +9,10 @@ services:
       AI_MODEL: ${AI_MODEL:-llama3.1:8b}
       OLLAMA_URL: http://ollama:11434/api/generate
       MAX_BODY_BYTES: ${MAX_BODY_BYTES:-1mb}
+      MAX_RESPONSE_CHARS: ${MAX_RESPONSE_CHARS:-200000}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
-      mariadb:
-        condition: service_healthy
       ollama:
         condition: service_healthy
     networks:
@@ -46,8 +23,6 @@ services:
     image: ollama/ollama:latest
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
-    ports:
-      - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -61,8 +36,6 @@ services:
       start_period: 60s
 
 volumes:
-  mariadb_data:
-    driver: local
   ollama_data:
     driver: local
 
