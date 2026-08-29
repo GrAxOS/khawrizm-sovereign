@@ -21,11 +21,8 @@ if (!Number.isInteger(MAX_RESPONSE_CHARS) || MAX_RESPONSE_CHARS < 1) {
 let ollamaUrl;
 try {
   ollamaUrl = new URL(OLLAMA_URL);
-  if (ollamaUrl.protocol !== 'http:' && ollamaUrl.protocol !== 'https:') {
-    throw new Error('OLLAMA_URL must use HTTP or HTTPS');
-  }
   const allowedHosts = new Set(['ollama', 'localhost', '127.0.0.1', '[::1]', '::1']);
-  if (!allowedHosts.has(ollamaUrl.hostname) || ollamaUrl.port !== '11434' || ollamaUrl.pathname !== '/api/generate' || ollamaUrl.search || ollamaUrl.hash) {
+  if (!['http:', 'https:'].includes(ollamaUrl.protocol) || !allowedHosts.has(ollamaUrl.hostname) || ollamaUrl.port !== '11434' || ollamaUrl.pathname !== '/api/generate' || ollamaUrl.search || ollamaUrl.hash) {
     throw new Error('OLLAMA_URL must target the local Ollama /api/generate endpoint');
   }
 } catch {
@@ -162,20 +159,16 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ error: 'Internal Server Error' });
 });
 
-const startServer = (port = PORT) => app.listen(port, '0.0.0.0', () => {
-  const address = serverAddress();
-  console.log(`Backend listening on port ${address}`);
-});
-
-const serverAddress = () => {
-  const address = activeServer?.address();
-  return address && typeof address === 'object' ? address.port : PORT;
-};
-
 let activeServer = null;
-if (require.main === module) {
-  activeServer = startServer();
-}
+
+const startServer = (port = PORT) => {
+  activeServer = app.listen(port, '0.0.0.0', () => {
+    const address = activeServer.address();
+    const actualPort = address && typeof address === 'object' ? address.port : port;
+    console.log(`Backend listening on port ${actualPort}`);
+  });
+  return activeServer;
+};
 
 const shutdown = (signal) => {
   if (!activeServer) process.exit(0);
@@ -186,5 +179,9 @@ const shutdown = (signal) => {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+if (require.main === module) {
+  startServer();
+}
 
 module.exports = { app, startServer };
